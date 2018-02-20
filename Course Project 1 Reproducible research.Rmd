@@ -1,0 +1,63 @@
+---
+title: "Course Project 1"
+author: "Rick van Zijl"
+date: "29 januari 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading and preprocessing the data
+
+
+```{r}
+setwd("C:/")
+data <- read.table("activity.csv", header = TRUE, sep = ',')
+summary(data)
+```
+
+## What is mean, median and histogram of steps taken per day?
+
+```{r}
+StepsTotal <- aggregate(steps ~ date, data = data, sum, na.rm = TRUE)
+mean(StepsTotal$steps, na.rm = TRUE)
+median(StepsTotal$steps, na.rm = TRUE)
+hist(StepsTotal$steps)
+
+```
+
+## Timeseries Plot of the average number of steps
+
+```{r}
+library(dplyr)
+library(ggplot2)
+TimeSeries <- data %>% group_by(interval) %>% summarise(Average = mean(steps, na.rm = TRUE))
+T <- ggplot(TimeSeries, aes(y = Average, x = interval)) + geom_line()
+print(T)
+```
+
+## The 5-minute interval that, on average, contains the maximum number of steps
+```{r}
+TimeSeries[TimeSeries$Average == max(TimeSeries$Average),]
+```
+
+## Code to describe and show a strategy for imputing missing data
+## Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r}
+data$steps[is.na(data$steps)] <- mean(TimeSeries$Average)
+StepsTotal <- aggregate(steps ~ date, data = data, sum, na.rm = TRUE)
+hist(StepsTotal$steps)
+```
+
+## Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r}
+data$day <- weekdays(as.Date(data$date))
+data$day <- ifelse(data$day == "zaterdag", "Weekend", ifelse(data$day == "zondag", "Weekend", "Workingday"))
+TimeSeries <- data %>% group_by(interval, day) %>% summarise(Average = mean(steps, na.rm = TRUE))
+ggplot(TimeSeries, aes(y = Average, x = interval)) + geom_line() + facet_grid(. ~ day)
+
+```
